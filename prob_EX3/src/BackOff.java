@@ -46,9 +46,9 @@ public class BackOff {
 		for (Tuple<String,String> tuple : tupleMap.keySet()) {
 			
 			if (tuple.getFirst().equals(word)) {
-				nominator += Lidstone.computeUnigramLidstoneValueOfEvent(eventsMap, eventsMapSize, tuple.getSecond(), ApplicationConstants.LAMDA1, true);
-				
-				denominator += Lidstone.computeBigramLidstoneValueOfEvent(tupleMap, eventsMapSize, tuple, lamda);
+				nominator += Lidstone.computeBigramLidstoneValueOfEvent(tupleMap, eventsMapSize, tuple, lamda);
+				denominator += Lidstone.computeUnigramLidstoneValueOfEvent(eventsMap, eventsMapSize, 
+						tuple.getSecond(), ApplicationConstants.LAMDA1, true);
 			}
 		}
 		
