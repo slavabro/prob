@@ -76,8 +76,9 @@ public class Simulation {
 		
 		// No split of the test set
 		this.m_testSplitBy1 = new SplitInputFile(this.m_testFile.getEvents(), this.m_testFile.getSize(), 1.0);
+		
 	}
-	
+			
 	/**
 	 * Create the init section of the exercise - lines 1 to 5
 	 */
@@ -110,27 +111,27 @@ public class Simulation {
 		
 		// The number of times the bigram (INPUT WORD1 INPUT WORD2) appears in the training set
 		Tuple<String,String> tuple = new Tuple<String, String>(this.m_strWord1,this.m_strWord2);
-		if (this.m_devSplitBy09.getFirstTupleHashMap().containsKey(tuple)) {
-			this.m_outFile.writeLine("#Output11\t" + this.m_devSplitBy09.getFirstTupleHashMap().get(tuple));
+		if (Util.tupleMapContains(this.m_devSplitBy09.getFirstBiHashMap(),tuple)) {
+			this.m_outFile.writeLine("#Output11\t" + this.m_devSplitBy09.getFirstBiHashMap().get(tuple));
 		} else {
 			this.m_outFile.writeLine("#Output11\t" + 0.0);
 		}
 		
 		// The perplexity with Lamda=0.0001
-		this.m_outFile.writeLine("#Output12\t" + Lidstone.calculatePerplexityBigramLidstone(this.m_devSplitBy09.getSecondTupleHashMap(),
-				this.m_devSplitBy09.getFirstTupleHashMap(), this.m_devSplitBy09.get_firstHashMap(), 0.0001));
+		this.m_outFile.writeLine("#Output12\t" + Lidstone.calculatePerplexityBigramLidstone(this.m_devSplitBy09.getSecondBiHashMap(),
+				this.m_devSplitBy09.getFirstBiHashMap(), this.m_devSplitBy09.get_firstHashMap(), 0.0001));
 		
 		// The perplexity with Lamda=0.001
-		this.m_outFile.writeLine("#Output13\t" + Lidstone.calculatePerplexityBigramLidstone(this.m_devSplitBy09.getSecondTupleHashMap(),
-				this.m_devSplitBy09.getFirstTupleHashMap(), this.m_devSplitBy09.get_firstHashMap(), 0.001));
+		this.m_outFile.writeLine("#Output13\t" + Lidstone.calculatePerplexityBigramLidstone(this.m_devSplitBy09.getSecondBiHashMap(),
+				this.m_devSplitBy09.getFirstBiHashMap(), this.m_devSplitBy09.get_firstHashMap(), 0.001));
 		
 		// The perplexity with Lamda=0.1
-		this.m_outFile.writeLine("#Output14\t" + Lidstone.calculatePerplexityBigramLidstone(this.m_devSplitBy09.getSecondTupleHashMap(),
-				this.m_devSplitBy09.getFirstTupleHashMap(), this.m_devSplitBy09.get_firstHashMap(), 0.1));
+		this.m_outFile.writeLine("#Output14\t" + Lidstone.calculatePerplexityBigramLidstone(this.m_devSplitBy09.getSecondBiHashMap(),
+				this.m_devSplitBy09.getFirstBiHashMap(), this.m_devSplitBy09.get_firstHashMap(), 0.1));
 		
 		// Calculate best lamda
-		List<Double> bestLidstone = getBestPerplexity(this.m_devSplitBy09.getSecondTupleHashMap(),
-				this.m_devSplitBy09.getFirstTupleHashMap(), this.m_devSplitBy09.get_firstHashMap());
+		List<Double> bestLidstone = getBestPerplexity(this.m_devSplitBy09.getSecondBiHashMap(),
+				this.m_devSplitBy09.getFirstBiHashMap(), this.m_devSplitBy09.get_firstHashMap());
 		
 		// Save the best lamda value for further use
 		this.m_bestLamdaValue = bestLidstone.get(0);
@@ -146,8 +147,8 @@ public class Simulation {
 	 * Evaluation on test set section, line 17
 	 */
 	private void evaluationOnTestSet() {
-		this.m_outFile.writeLine("#Output17\t" + Lidstone.calculatePerplexityBigramLidstone(this.m_testSplitBy1.getFirstTupleHashMap(),
-				this.m_devSplitBy1.getFirstTupleHashMap(), this.m_devSplitBy1.get_firstHashMap(), this.m_bestLamdaValue));
+		this.m_outFile.writeLine("#Output17\t" + Lidstone.calculatePerplexityBigramLidstone(this.m_testSplitBy1.getFirstBiHashMap(),
+				this.m_devSplitBy1.getFirstBiHashMap(), this.m_devSplitBy1.get_firstHashMap(), this.m_bestLamdaValue));
 	}	
 	
 	/**
@@ -157,7 +158,7 @@ public class Simulation {
 	 * @param seenSetSize
 	 * @return
 	 */
-	private List<Double> getBestPerplexity(Map<Tuple<String,String>, Integer> tupleUnseenMap, Map<Tuple<String,String>, Integer> tupleSeenMap,
+	private List<Double> getBestPerplexity(Map<String, Map<String,Integer>> tupleUnseenMap, Map<String, Map<String,Integer>> tupleSeenMap,
 			Map<String,Integer> eventsMap){
 		List<Double> resList = new ArrayList<Double>();
 		resList.add(0, Double.MAX_VALUE);
@@ -221,41 +222,41 @@ public class Simulation {
 	 * Debug section - line 18
 	 */
 	private void debug() {
-		// Number of different events in the training set - Vt
-		int Vt = this.m_devSplitBy09.get_firstHashMap().keySet().size();
-		
-		// Create map of all the back-off probabilities
-		Map<String, Double> backOffProbs = new HashMap<String,Double>();
-		for (String event : this.m_devSplitBy09.get_firstHashMap().keySet()) {
-			Tuple<String,String> tuple = new Tuple<String,String>(this.m_strWord1, event);
-			backOffProbs.put(event, BackOff.calculateBackOff(tuple, this.m_devSplitBy09.getFirstTupleHashMap(),
-					this.m_devSplitBy09.get_firstHashMap(), 0.001));
-		}
-		
-		// Sort the map by back-off probability
-		backOffProbs = this.sortHashMap(backOffProbs);
-		
-		// Iterate the different events in the training set
-		int i = 1;
-		for (String event : backOffProbs.keySet()) {
-			
-			this.m_outFile.write(i + "\t" + event + "\t");
-			
-			// count(INPUT_WORD1,x)
-			Tuple<String,String> tuple = new Tuple<String,String>(this.m_strWord1, event);
-			if (this.m_devSplitBy09.getFirstTupleHashMap().containsKey(tuple)) {
-				this.m_outFile.write(this.m_devSplitBy09.getFirstTupleHashMap().get(tuple) + "\t");
-			} else {
-				this.m_outFile.write(0 + "\t");
-			}
-			
-			// PB(x|INPUT_WORD1)
-			this.m_outFile.writeLine(String.valueOf(backOffProbs.get(event)));
-			i++;
-		}
-		
-		// Write last line of unseen events
-		this.m_outFile.writeLine((ApplicationConstants.VOCABULARY_SIZE - Vt) + "\t" + "UNSEEN_EVENTS" + "\t" + 0 +
-				"\t" + (1.0 * Lidstone.computeUnigramLidstoneValueOfEvent(null, Vt, null, ApplicationConstants.LAMDA1, false)));
+//		// Number of different events in the training set - Vt
+//		int Vt = this.m_devSplitBy09.get_firstHashMap().keySet().size();
+//		
+//		// Create map of all the back-off probabilities
+//		Map<String, Double> backOffProbs = new HashMap<String,Double>();
+//		for (String event : this.m_devSplitBy09.get_firstHashMap().keySet()) {
+//			Tuple<String,String> tuple = new Tuple<String,String>(this.m_strWord1, event);
+//			backOffProbs.put(event, BackOff.calculateBackOff(tuple, this.m_devSplitBy09.getFirstTupleHashMap(),
+//					this.m_devSplitBy09.get_firstHashMap(), 0.001));
+//		}
+//		
+//		// Sort the map by back-off probability
+//		backOffProbs = this.sortHashMap(backOffProbs);
+//		
+//		// Iterate the different events in the training set
+//		int i = 1;
+//		for (String event : backOffProbs.keySet()) {
+//			
+//			this.m_outFile.write(i + "\t" + event + "\t");
+//			
+//			// count(INPUT_WORD1,x)
+//			Tuple<String,String> tuple = new Tuple<String,String>(this.m_strWord1, event);
+//			if (this.m_devSplitBy09.getFirstTupleHashMap().containsKey(tuple)) {
+//				this.m_outFile.write(this.m_devSplitBy09.getFirstTupleHashMap().get(tuple) + "\t");
+//			} else {
+//				this.m_outFile.write(0 + "\t");
+//			}
+//			
+//			// PB(x|INPUT_WORD1)
+//			this.m_outFile.writeLine(String.valueOf(backOffProbs.get(event)));
+//			i++;
+//		}
+//		
+//		// Write last line of unseen events
+//		this.m_outFile.writeLine((ApplicationConstants.VOCABULARY_SIZE - Vt) + "\t" + "UNSEEN_EVENTS" + "\t" + 0 +
+//				"\t" + (1.0 * Lidstone.computeUnigramLidstoneValueOfEvent(null, Vt, null, ApplicationConstants.LAMDA1, false)));
 	}
 }

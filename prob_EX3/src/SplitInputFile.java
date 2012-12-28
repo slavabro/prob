@@ -24,6 +24,9 @@ public class SplitInputFile {
 	private Map<Tuple<String,String>,Integer> m_firstTupleHashMap = null;
 	private Map<Tuple<String,String>,Integer> m_secondTupleHashMap = null;
 	
+	private Map<String,Map<String,Integer>> m_firstBiHashMap = null;
+	private Map<String,Map<String,Integer>> m_secondBiHashMap = null;
+
 	public SplitInputFile(ArrayList<String> events, int eventsSize, double percent) {
 		this.m_allEvents = events;
 		this.m_allSize = eventsSize;
@@ -42,8 +45,9 @@ public class SplitInputFile {
 		this.m_firstSet = new ArrayList<String>();
 		this.m_firstHashMap = new HashMap<String, Integer>();
 		this.m_firstTupleHashMap = new HashMap<Tuple<String,String>, Integer>();
+		this.m_firstBiHashMap = new HashMap<String, Map<String,Integer>>();
 		int i = 0;
-		
+
 		while (i < this.m_firstSize - 1) {
 			String word1 = this.m_allEvents.get(i);
 			String word2 = this.m_allEvents.get(i + 1);
@@ -66,6 +70,20 @@ public class SplitInputFile {
 				this.m_firstTupleHashMap.put(tuple, this.m_firstTupleHashMap.get(tuple) + 1);
 			}
 			
+			// Create the BiHashMap data structure
+			if (!this.m_firstBiHashMap.containsKey(word1)) {
+				Map<String, Integer> tmpHash = new HashMap<String, Integer>();
+				tmpHash.put(word2, 1);
+				this.m_firstBiHashMap.put(word1, tmpHash);
+			} else {
+				//check if the first word contains the second word as a tuple already
+				if(!this.m_firstBiHashMap.get(word1).containsKey(word2)) 
+					this.m_firstBiHashMap.get(word1).put(word2, 1);				
+				else
+					this.m_firstBiHashMap.get(word1).put(word2, 
+							this.m_firstBiHashMap.get(word1).get(word2) + 1);
+			}
+			
 			i++;
 		}
 		
@@ -86,6 +104,7 @@ public class SplitInputFile {
 		this.m_secondSet = new ArrayList<String>();
 		this.m_secondHashMap = new HashMap<String, Integer>();
 		this.m_secondTupleHashMap = new HashMap<Tuple<String,String>, Integer>();
+		this.m_secondBiHashMap = new HashMap<String, Map<String,Integer>>();
 		
 		while (i < this.m_allSize - 1) {
 			String word1 = this.m_allEvents.get(i);
@@ -109,6 +128,21 @@ public class SplitInputFile {
 				this.m_secondTupleHashMap.put(tuple, this.m_secondTupleHashMap.get(tuple) + 1);
 			}
 			
+			// Create the BiHashMap data structure
+			if (!this.m_secondBiHashMap.containsKey(word1)) {
+				Map<String, Integer> tmpHash = new HashMap<String, Integer>();
+				tmpHash.put(word2, 1);
+				this.m_secondBiHashMap.put(word1, tmpHash);
+			} 
+			else {
+				//check if the first word contains the second word as a tuple already
+				if(!this.m_secondBiHashMap.get(word1).containsKey(word2))
+					this.m_secondBiHashMap.get(word1).put(word2, 1);
+				else
+					this.m_secondBiHashMap.get(word1).put(word2,
+							this.m_secondBiHashMap.get(word1).get(word2) + 1);
+				}
+			
 			i++;
 		}
 		this.m_secondSize = this.m_secondSet.size();
@@ -126,7 +160,7 @@ public class SplitInputFile {
 		//create the set data structure
 		this.m_secondSet.add(word);
 	}
-	
+		
 	public ArrayList<String> getFirstSet() {
 		return m_firstSet;
 	}
@@ -152,11 +186,21 @@ public class SplitInputFile {
 		return m_secondHashMap;
 	}
 
-	public Map<Tuple<String, String>, Integer> getFirstTupleHashMap() {
+	private Map<Tuple<String, String>, Integer> getFirstTupleHashMap() {
 		return m_firstTupleHashMap;
 	}
 
-	public Map<Tuple<String, String>, Integer> getSecondTupleHashMap() {
+	private Map<Tuple<String, String>, Integer> getSecondTupleHashMap() {
 		return m_secondTupleHashMap;
 	}
+	
+	public Map<String, Map<String, Integer>> getFirstBiHashMap() {
+		return m_firstBiHashMap;
+	}
+
+	public Map<String, Map<String, Integer>> getSecondBiHashMap() {
+		return m_secondBiHashMap;
+	}
+	
+
 }

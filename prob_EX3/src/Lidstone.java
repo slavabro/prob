@@ -54,12 +54,12 @@ public class Lidstone {
 	 * @param isTupleExists
 	 * @return
 	 */
-	public static double computeBigramLidstoneValueOfEvent(Map<Tuple<String,String>, Integer> tupleMap, int setSize,
+	public static double computeBigramLidstoneValueOfEvent(Map<String,Map<String,Integer>> tupleMap, int setSize,
 			Tuple<String,String> tuple, double lamda) {
 		int result = 0;
 		
 		if (tupleMap.containsKey(tuple)) {
-			result = tupleMap.get(tuple);
+			result = Util.getTupleCount(tupleMap, (tuple));
 		}
 		
 		return Lidstone.computeLidstoneValueOfFrequencyNum(setSize, 
@@ -73,15 +73,20 @@ public class Lidstone {
 	 * @param lamda
 	 * @return
 	 */
-	public static double calculatePerplexityBigramLidstone(Map<Tuple<String,String>, Integer> tupleUnseenMap, Map<Tuple<String,String>, Integer> tupleSeenMap,
+	public static double calculatePerplexityBigramLidstone(Map<String,Map<String,Integer>> tupleUnseenMap, Map<String,Map<String,Integer>> tupleSeenMap,
 			Map<String,Integer> eventsMap, double lamda) {
 		double result = 0.0;
 		
-		for (Tuple<String,String> tuple : tupleUnseenMap.keySet()) {
-			
-			// Calculate by log 2
-			double p =  Math.log(BackOff.calculateBackOff(tuple, tupleSeenMap, eventsMap, lamda)) / Math.log(2);
-			result += (p * tupleUnseenMap.get(tuple));
+		Map<String, Double> alphaMapHelper = BackOff.calculateAlphaMap(tupleUnseenMap, tupleSeenMap, lamda, eventsMap, tupleUnseenMap.keySet().size());
+		
+		for (String word1 : tupleUnseenMap.keySet()) {
+			for (String word2 : tupleUnseenMap.get(word1).keySet()) {
+				// Calculate by log 2
+				double p =  Math.log(BackOff.calculateBackOff(new Tuple<String, String>(word1, word2),
+						tupleSeenMap, eventsMap, lamda, alphaMapHelper))
+						/ Math.log(2);
+				result += (p * Util.getTupleCount(tupleUnseenMap, new Tuple<String, String>(word1, word2)));
+			}
 		}
 		
 		return (Math.pow(2, (-1.0 / (double)tupleUnseenMap.keySet().size()) * result));
